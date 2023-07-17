@@ -23,14 +23,14 @@ type loggingMiddleware struct {
 	next   Service
 }
 
-func (mw loggingMiddleware) DayTopViewd(ctx context.Context, limit int64) (result []model.Response, err error) {
+func (mw loggingMiddleware) DayTopViewd(ctx context.Context, limit int64) (result []model.ViedeoDetails, err error) {
 	defer func() {
 		mw.logger.Log("method", "DayTopViewd", "limit", limit, "err", err)
 	}()
 	return mw.next.DayTopViewd(ctx, limit)
 }
 
-func (mw loggingMiddleware) LifetimeTopViews(ctx context.Context, limit int64) (result []model.Response, err error) {
+func (mw loggingMiddleware) LifetimeTopViews(ctx context.Context, limit int64) (result []model.ViedeoDetails, err error) {
 	defer func() {
 		mw.logger.Log("method", "LifetimeTopViews", "limit", limit, "err", err)
 	}()

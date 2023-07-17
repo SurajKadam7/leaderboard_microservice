@@ -3,78 +3,82 @@ package viewservice
 import (
 	"context"
 
-	"github.com/go-kit/log"
-	"github.com/surajkadam/youtube_assignment/config"
+	"github.com/surajkadam/youtube_assignment/model"
+	cache "github.com/surajkadam/youtube_assignment/repository"
 )
 
 // my bussiness logic will stay here ...
 type Service interface {
-	Viewing(ctx context.Context, video string) (result Response, err error)
-	DayViews(ctx context.Context, video string) (result Response, err error)
-	LifetimeViews(ctx context.Context, video string) (result Response, err error)
-}
-
-type Response struct {
-	VideoName string  `json:"videoName"`
-	Viewes    float64 `json:"viewes"`
+	Viewing(ctx context.Context, video string) (result model.ViedeoDetails, err error)
+	DayViews(ctx context.Context, video string) (result model.ViedeoDetails, err error)
+	LifetimeViews(ctx context.Context, video string) (result model.ViedeoDetails, err error)
+	AddVideos(ctx context.Context, videos []model.Video) (result model.AddVideoStatus, err error)
 }
 
 type service struct {
-	config *config.Config
+	cache cache.Repository
 }
 
-func New(c *config.Config, logger log.Logger) Service {
-	var srv Service
-	srv = newService(c)
-	srv = LoggingMiddleware(logger)(srv)
-	return srv
-}
-
-func newService(c *config.Config) *service {
+func New(c cache.Repository) *service {
 	return &service{
-		config: c,
+		cache: c,
 	}
 }
 
-func (s *service) Viewing(ctx context.Context, video string) (respose Response, err error) {
-	incrementBy := 1
+func (s *service) Viewing(ctx context.Context, video string) (result model.ViedeoDetails, err error) {
+	var incrementBy int64 = 1
 
-	res, err := s.config.Cache.Viewed(ctx, s.config.LifetimeKey(), video, float64(incrementBy))
+	res, err := s.cache.Viewed(ctx, video, incrementBy)
 	if err != nil {
-		return respose, err
+		return result, err
 	}
 
-	_, err = s.config.Cache.Viewed(ctx, s.config.DayKey(), video, float64(incrementBy))
-	if err != nil {
-		return respose, err
-	}
-
-	return Response{
+	return model.ViedeoDetails{
 		VideoName: video,
 		Viewes:    res,
 	}, nil
 }
 
-func (s *service) views(ctx context.Context, key string, video string) (result Response, err error) {
+func (s *service) DayViews(ctx context.Context, video string) (result model.ViedeoDetails, err error) {
+	views, err := s.cache.DayViewCount(ctx, video)
 
-	views, err := s.config.Cache.ViewCount(ctx, key, video)
 	if err != nil {
 		return result, err
 	}
 
-	result = Response{
+	result = model.ViedeoDetails{
 		VideoName: video,
 		Viewes:    views,
 	}
 
 	return result, nil
-
 }
 
-func (s *service) DayViews(ctx context.Context, video string) (result Response, err error) {
-	return s.views(ctx, s.config.DayKey(), video)
+func (s *service) LifetimeViews(ctx context.Context, video string) (result model.ViedeoDetails, err error) {
+
+	views, err := s.cache.LifetimeViewCount(ctx, video)
+
+	if err != nil {
+		return result, err
+	}
+
+	result = model.ViedeoDetails{
+		VideoName: video,
+		Viewes:    views,
+	}
+
+	return result, nil
 }
 
-func (s *service) LifetimeViews(ctx context.Context, video string) (result Response, err error) {
-	return s.views(ctx, s.config.LifetimeKey(), video)
+func (s *service) AddVideos(ctx context.Context, videos []model.Video) (result model.AddVideoStatus, err error) {
+
+	err = s.cache.AddVideos(ctx, videos)
+	if err != nil {
+		return result, err
+	}
+
+	result = model.AddVideoStatus{
+		Status: "ok",
+	}
+	return result, nil
 }

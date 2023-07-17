@@ -1,0 +1,8 @@
+{
+  "key":"youtube_assignment",
+  "port":":8080",
+  "address" : "localhost:6379",
+  "poolSize":50,
+  "username":"",
+  "password": ""
+}

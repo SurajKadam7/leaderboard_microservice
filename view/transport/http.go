@@ -22,36 +22,43 @@ func NewHTTPHandler(endpoint viewendpoint.Set, logger kitlog.Logger) http.Handle
 
 	viewingHandler := kithttp.NewServer(
 		endpoint.ViewingEndpoint,
-		decodeViewsRequest,
+		decodeViewingRequest,
 		encodeResponse,
 		opts...,
 	)
 
 	dayViewsHandler := kithttp.NewServer(
 		endpoint.DayViewsEndpoint,
-		decodeViewsRequest,
+		decodeDayViewRequest,
 		encodeResponse,
 		opts...,
 	)
 
 	lifetimeViewsHandler := kithttp.NewServer(
 		endpoint.LifetimeViewsEndpoint,
-		decodeViewsRequest,
+		decodeLifetimeViewsRequest,
 		encodeResponse,
 		opts...,
 	)
 
+	addVideoHandler := kithttp.NewServer(
+		endpoint.AddVideosEndpoint,
+		decodeAddViedosRequest,
+		encodeResponse,
+		opts...,
+	)
 	mux := mux.NewRouter()
 
-	mux.Handle("/youtube/video/viewing", viewingHandler)
-	mux.Handle("/youtube/video/viewes", lifetimeViewsHandler)
-	mux.Handle("/youtube/video/day/viewes", dayViewsHandler)
+	mux.Handle("/video/viewing", viewingHandler).Methods("GET")
+	mux.Handle("/video/viewes", lifetimeViewsHandler).Methods("GET")
+	mux.Handle("/video/day/viewes", dayViewsHandler).Methods("GET")
+	mux.Handle("/video/add", addVideoHandler).Methods("POST")
 
 	return mux
 
 }
 
-func decodeViewsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func viewDecoder(r *http.Request) (interface{}, error) {
 	video := r.URL.Query().Get("name")
 	if len(video) == 0 {
 		return nil, youtubeerror.ErrEmptyVideoValuePassed
@@ -59,24 +66,68 @@ func decodeViewsRequest(_ context.Context, r *http.Request) (interface{}, error)
 	return video, nil
 }
 
+func decodeViewingRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	v, err := viewDecoder(r)
+	if err != nil {
+		return nil, err
+	}
+	video := v.(string)
+	return viewendpoint.ViewingRequest{
+		Video: video,
+	}, nil
+}
+
+func decodeDayViewRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	v, err := viewDecoder(r)
+	if err != nil {
+		return nil, err
+	}
+	video := v.(string)
+	return viewendpoint.DayViewsRequest{
+		Video: video,
+	}, nil
+}
+
+func decodeLifetimeViewsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	v, err := viewDecoder(r)
+	if err != nil {
+		return nil, err
+	}
+	video := v.(string)
+	return viewendpoint.LifetimeViewRequest{
+		Video: video,
+	}, nil
+}
+
+func decodeAddViedosRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	videos := viewendpoint.AddVideosRequest{}
+
+	if err := json.NewDecoder(r.Body).Decode(&videos); err != nil {
+		return nil, youtubeerror.ErrNotAbleToParse
+	}
+	return videos, nil
+}
+
 // incomplete implimentation
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if e, ok := response.(errorer); ok && e.error() != nil {
-		encodeError(ctx, e.error(), w)
+	if e, ok := response.(Errorr); ok && e.Error() != nil {
+		encodeError(ctx, e.Error(), w)
 		return nil
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	return json.NewEncoder(w).Encode(response)
 }
 
-type errorer interface {
-	error() error
+type Errorr interface {
+	Error() error
 }
 
 // encode errors from business-logic
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	switch err {
+	case youtubeerror.ErrEmptyVideoValuePassed, youtubeerror.ErrInvalidLimitValue, youtubeerror.ErrVideoNotFound:
+		w.WriteHeader(http.StatusBadRequest)
 
 	default:
 		w.WriteHeader(http.StatusInternalServerError)

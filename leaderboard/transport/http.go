@@ -10,6 +10,7 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	kitlog "github.com/go-kit/log"
 	"github.com/gorilla/mux"
+	youtubeerror "github.com/surajkadam/youtube_assignment/errors"
 	leaderendpoint "github.com/surajkadam/youtube_assignment/leaderboard/endpoint"
 
 	"github.com/go-kit/kit/transport"
@@ -25,55 +26,71 @@ func NewHTTPHandler(endpoint leaderendpoint.Set, logger kitlog.Logger) http.Hand
 
 	dayViewsHandler := kithttp.NewServer(
 		endpoint.DayTopViewsEndpoint,
-		decodeTopViewsRequest,
+		decodeDayTopViewsRequest,
 		encodeResponse,
 		opts...,
 	)
 
 	lifetimeViewsHandler := kithttp.NewServer(
 		endpoint.LifetimeTopViewsEndpoint,
-		decodeTopViewsRequest,
+		decodeLifetimeTopViewsRequest,
 		encodeResponse,
 		opts...,
 	)
 
 	mux := mux.NewRouter()
 
-	mux.Handle("/youtube/top/viewes", lifetimeViewsHandler)
-	mux.Handle("/youtube/top/day/viewes", dayViewsHandler)
+	mux.Handle("/top/viewes", lifetimeViewsHandler).Methods("GET")
+	mux.Handle("/top/day/viewes", dayViewsHandler).Methods("GET")
 
 	return mux
 
 }
 
-func decodeTopViewsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeDayTopViewsRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	l := r.URL.Query().Get("limit")
 	limit, err := strconv.ParseInt(l, 10, 64)
+
 	if err != nil {
 		return nil, fmt.Errorf("invalid value in limit can not parse it: %v", limit)
 	}
-	return limit, nil
+	return &leaderendpoint.DayTopRequest{
+		Limit: limit,
+	}, nil
+
 }
 
-// incomplete implimentation
+func decodeLifetimeTopViewsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	l := r.URL.Query().Get("limit")
+	limit, err := strconv.ParseInt(l, 10, 64)
+
+	if err != nil {
+		return nil, fmt.Errorf("invalid value in limit can not parse it: %v", limit)
+	}
+	return &leaderendpoint.LifeTimeTopRequest{
+		Limit: limit,
+	}, nil
+}
+
 func encodeResponse(ctx context.Context, w http.ResponseWriter, response interface{}) error {
-	if e, ok := response.(errorer); ok && e.error() != nil {
-		encodeError(ctx, e.error(), w)
+	if e, ok := response.(Errorr); ok && e.Error() != nil {
+		encodeError(ctx, e.Error(), w)
 		return nil
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	return json.NewEncoder(w).Encode(response)
 }
 
-type errorer interface {
-	error() error
+type Errorr interface {
+	Error() error
 }
 
-// this will return the final error to the client...
+// encode errors from business-logic
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	switch err {
-	case leaderendpoint.ErrInvalidArgument:
+
+	case youtubeerror.ErrEmptyVideoValuePassed, youtubeerror.ErrInvalidLimitValue, youtubeerror.ErrVideoNotFound:
 		w.WriteHeader(http.StatusBadRequest)
 
 	default:
@@ -82,5 +99,4 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"error": err.Error(),
 	})
-
 }

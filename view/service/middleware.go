@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/go-kit/log"
+	"github.com/surajkadam/youtube_assignment/model"
 )
 
 // Middleware describes a service (as opposed to endpoint) middleware.
@@ -22,24 +23,32 @@ type loggingMiddleware struct {
 	next   Service
 }
 
-func (mw loggingMiddleware) Viewing(ctx context.Context, video string) (response Response, err error) {
+func (mw loggingMiddleware) Viewing(ctx context.Context, video string) (response model.ViedeoDetails, err error) {
 	defer func() {
 		mw.logger.Log("method", "Viewing", "video", video, "err", err)
 	}()
 	return mw.next.Viewing(ctx, video)
 }
 
-func (mw loggingMiddleware) DayViews(ctx context.Context, video string) (result Response, err error) {
+func (mw loggingMiddleware) DayViews(ctx context.Context, video string) (result model.ViedeoDetails, err error) {
 	defer func() {
 		mw.logger.Log("method", "DayViews", "video", video, "err", err)
 	}()
 	return mw.next.DayViews(ctx, video)
 }
 
-func (mw loggingMiddleware) LifetimeViews(ctx context.Context, video string) (result Response, err error) {
+func (mw loggingMiddleware) LifetimeViews(ctx context.Context, video string) (result model.ViedeoDetails, err error) {
 	defer func() {
 		mw.logger.Log("method", "LifetimeViews", "video", video, "err", err)
 	}()
 	return mw.next.LifetimeViews(ctx, video)
+
+}
+
+func (mw loggingMiddleware) AddVideos(ctx context.Context, videos []model.Video) (result model.AddVideoStatus, err error) {
+	defer func() {
+		mw.logger.Log("method", "AddVideos", "err", err)
+	}()
+	return mw.next.AddVideos(ctx, videos)
 
 }
