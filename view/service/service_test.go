@@ -9,8 +9,8 @@ import (
 	"github.com/golang/mock/gomock"
 	youtubeerror "github.com/surajkadam/youtube_assignment/errors"
 	"github.com/surajkadam/youtube_assignment/model"
-	cache "github.com/surajkadam/youtube_assignment/repository"
-	mock_cache "github.com/surajkadam/youtube_assignment/repository/mock"
+	cache "github.com/surajkadam/youtube_assignment/repo"
+	mock_cache "github.com/surajkadam/youtube_assignment/repo/mock"
 )
 
 var videos = []model.ViedeoDetails{
@@ -65,7 +65,7 @@ func Test_service_Viewing(t *testing.T) {
 				ctx:   context.TODO(),
 				video: "race3",
 			},
-			wantResult: videos[0],
+			wantResult: videos[2],
 			wantErr:    false,
 		},
 		{
@@ -83,9 +83,9 @@ func Test_service_Viewing(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &service{
-				cache: tt.fields.cache,
+				repo: tt.fields.cache,
 			}
-			gotResult, err := s.Viewing(tt.args.ctx, tt.args.video)
+			gotResult, err := s.View(tt.args.ctx, tt.args.video)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("service.Viewing() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -140,7 +140,7 @@ func Test_service_DayViews(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &service{
-				cache: tt.fields.cache,
+				repo: tt.fields.cache,
 			}
 			gotResult, err := s.DayViews(tt.args.ctx, tt.args.video)
 			if (err != nil) != tt.wantErr {
@@ -195,7 +195,7 @@ func Test_service_LifetimeViews(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &service{
-				cache: tt.fields.cache,
+				repo: tt.fields.cache,
 			}
 			gotResult, err := s.LifetimeViews(tt.args.ctx, tt.args.video)
 			if (err != nil) != tt.wantErr {
@@ -271,7 +271,7 @@ func Test_service_AddVideos(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &service{
-				cache: tt.fields.cache,
+				repo: tt.fields.cache,
 			}
 			gotResult, err := s.AddVideos(tt.args.ctx, tt.args.videos)
 			if (err != nil) != tt.wantErr {

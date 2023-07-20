@@ -4,31 +4,38 @@ import (
 	"context"
 
 	"github.com/surajkadam/youtube_assignment/model"
-	cache "github.com/surajkadam/youtube_assignment/repository"
+	"github.com/surajkadam/youtube_assignment/repo"
 )
 
 // my bussiness logic will stay here ...
 type Service interface {
-	Viewing(ctx context.Context, video string) (result model.ViedeoDetails, err error)
+	// View will increase the count of the video which the viewer is watching
+	View(ctx context.Context, video string) (result model.ViedeoDetails, err error)
+
+	//DayViews will get name of the video and return the current day views count of that videos
 	DayViews(ctx context.Context, video string) (result model.ViedeoDetails, err error)
+
+	// LifetimeViews will get name of the video and return the lifetime views count of that videos
 	LifetimeViews(ctx context.Context, video string) (result model.ViedeoDetails, err error)
+
+	// AddVideos will get the slice of videos and add them into the db. it will return status ok in success
 	AddVideos(ctx context.Context, videos []model.Video) (result model.AddVideoStatus, err error)
 }
 
 type service struct {
-	cache cache.Repository
+	repo repo.Repository
 }
 
-func New(c cache.Repository) *service {
+func New(c repo.Repository) *service {
 	return &service{
-		cache: c,
+		repo: c,
 	}
 }
 
-func (s *service) Viewing(ctx context.Context, video string) (result model.ViedeoDetails, err error) {
+func (s *service) View(ctx context.Context, video string) (result model.ViedeoDetails, err error) {
 	var incrementBy int64 = 1
 
-	res, err := s.cache.Viewed(ctx, video, incrementBy)
+	res, err := s.repo.Viewed(ctx, video, incrementBy)
 	if err != nil {
 		return result, err
 	}
@@ -40,7 +47,7 @@ func (s *service) Viewing(ctx context.Context, video string) (result model.Viede
 }
 
 func (s *service) DayViews(ctx context.Context, video string) (result model.ViedeoDetails, err error) {
-	views, err := s.cache.DayViewCount(ctx, video)
+	views, err := s.repo.DayViewCount(ctx, video)
 
 	if err != nil {
 		return result, err
@@ -56,7 +63,7 @@ func (s *service) DayViews(ctx context.Context, video string) (result model.Vied
 
 func (s *service) LifetimeViews(ctx context.Context, video string) (result model.ViedeoDetails, err error) {
 
-	views, err := s.cache.LifetimeViewCount(ctx, video)
+	views, err := s.repo.LifetimeViewCount(ctx, video)
 
 	if err != nil {
 		return result, err
@@ -72,7 +79,7 @@ func (s *service) LifetimeViews(ctx context.Context, video string) (result model
 
 func (s *service) AddVideos(ctx context.Context, videos []model.Video) (result model.AddVideoStatus, err error) {
 
-	err = s.cache.AddVideos(ctx, videos)
+	err = s.repo.AddVideos(ctx, videos)
 	if err != nil {
 		return result, err
 	}

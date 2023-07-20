@@ -5,21 +5,24 @@ import (
 
 	youtubeerror "github.com/surajkadam/youtube_assignment/errors"
 	"github.com/surajkadam/youtube_assignment/model"
-	cache "github.com/surajkadam/youtube_assignment/repository"
+	"github.com/surajkadam/youtube_assignment/repo"
 )
 
 type Service interface {
+	// DayTopViewd this will return the day top viewed videos with the given videos limit
 	DayTopViewd(ctx context.Context, limit int64) (result []model.ViedeoDetails, err error)
+
+	// LifetimeTopViewd this will return the Lifetime top viewed videos with the given videos limit
 	LifetimeTopViews(ctx context.Context, limit int64) (result []model.ViedeoDetails, err error)
 }
 
 type service struct {
-	cache cache.Repository
+	repo repo.Repository
 }
 
-func New(c cache.Repository) *service {
+func New(c repo.Repository) *service {
 	return &service{
-		cache: c,
+		repo: c,
 	}
 }
 
@@ -41,7 +44,7 @@ func (s *service) DayTopViewd(ctx context.Context, limit int64) (result []model.
 	if !ok {
 		return nil, youtubeerror.ErrInvalidLimitValue
 	}
-	result, err = s.cache.DayTopViewed(ctx, limit)
+	result, err = s.repo.DayTopViewed(ctx, limit)
 
 	if err != nil {
 		return nil, err
@@ -57,7 +60,7 @@ func (s *service) LifetimeTopViews(ctx context.Context, limit int64) (result []m
 		return nil, youtubeerror.ErrInvalidLimitValue
 	}
 
-	result, err = s.cache.LifetimeTopViewed(ctx, limit)
+	result, err = s.repo.LifetimeTopViewed(ctx, limit)
 
 	if err != nil {
 		return nil, err

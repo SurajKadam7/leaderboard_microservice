@@ -2,6 +2,7 @@ package viewservice
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/go-kit/log"
 	"github.com/surajkadam/youtube_assignment/model"
@@ -23,23 +24,23 @@ type loggingMiddleware struct {
 	next   Service
 }
 
-func (mw loggingMiddleware) Viewing(ctx context.Context, video string) (response model.ViedeoDetails, err error) {
+func (mw loggingMiddleware) View(ctx context.Context, video string) (response model.ViedeoDetails, err error) {
 	defer func() {
-		mw.logger.Log("method", "Viewing", "video", video, "err", err)
+		mw.logger.Log("method", "Viewing", "video", video, "result", fmt.Sprintf("res : %+v", response), "err", err)
 	}()
-	return mw.next.Viewing(ctx, video)
+	return mw.next.View(ctx, video)
 }
 
 func (mw loggingMiddleware) DayViews(ctx context.Context, video string) (result model.ViedeoDetails, err error) {
 	defer func() {
-		mw.logger.Log("method", "DayViews", "video", video, "err", err)
+		mw.logger.Log("method", "DayViews", "video", video, "result", fmt.Sprintf("res : %+v", result), "err", err)
 	}()
 	return mw.next.DayViews(ctx, video)
 }
 
 func (mw loggingMiddleware) LifetimeViews(ctx context.Context, video string) (result model.ViedeoDetails, err error) {
 	defer func() {
-		mw.logger.Log("method", "LifetimeViews", "video", video, "err", err)
+		mw.logger.Log("method", "LifetimeViews", "video", video, "result", fmt.Sprintf("res : %+v", result), "err", err)
 	}()
 	return mw.next.LifetimeViews(ctx, video)
 
@@ -47,7 +48,7 @@ func (mw loggingMiddleware) LifetimeViews(ctx context.Context, video string) (re
 
 func (mw loggingMiddleware) AddVideos(ctx context.Context, videos []model.Video) (result model.AddVideoStatus, err error) {
 	defer func() {
-		mw.logger.Log("method", "AddVideos", "err", err)
+		mw.logger.Log("method", "AddVideos", "result", fmt.Sprintf("res : %+v", result), "err", err)
 	}()
 	return mw.next.AddVideos(ctx, videos)
 

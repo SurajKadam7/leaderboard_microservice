@@ -2,6 +2,8 @@ package leaderendpoint
 
 import (
 	"context"
+	"errors"
+	"strconv"
 
 	"github.com/go-kit/kit/endpoint"
 	leaderservice "github.com/surajkadam/youtube_assignment/leaderboard/service"
@@ -31,7 +33,7 @@ func New(srv leaderservice.Service) Set {
 }
 
 type DayTopRequest struct {
-	Limit int64
+	Limit string
 }
 
 type DayTopResponse struct {
@@ -52,7 +54,12 @@ func makeDayTopViewsEndpoint(s leaderservice.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		res, err := s.DayTopViewd(ctx, l.Limit)
+		limit, err := strconv.ParseInt(l.Limit, 10, 64)
+		if err != nil {
+			return response, errors.New("not able to parse the limit into int")
+		}
+
+		res, err := s.DayTopViewd(ctx, limit)
 
 		return &DayTopResponse{
 			Videos: res,
@@ -63,7 +70,7 @@ func makeDayTopViewsEndpoint(s leaderservice.Service) endpoint.Endpoint {
 }
 
 type LifeTimeTopRequest struct {
-	Limit int64
+	Limit string
 }
 
 type LifeTimeTopResponse struct {
@@ -82,7 +89,14 @@ func makeLifetimeTopViewsEndpoint(s leaderservice.Service) endpoint.Endpoint {
 		if err != nil {
 			return nil, err
 		}
-		res, err := s.LifetimeTopViews(ctx, l.Limit)
+
+		limit, err := strconv.ParseInt(l.Limit, 10, 64)
+
+		if err != nil {
+			return response, errors.New("not able to parse the limit into int")
+		}
+
+		res, err := s.LifetimeTopViews(ctx, limit)
 
 		return &LifeTimeTopResponse{
 			Videos: res,

@@ -8,7 +8,7 @@ import (
 	redis "github.com/redis/go-redis/v9"
 	youtubeerror "github.com/surajkadam/youtube_assignment/errors"
 	"github.com/surajkadam/youtube_assignment/model"
-	cache "github.com/surajkadam/youtube_assignment/repository"
+	cache "github.com/surajkadam/youtube_assignment/repo"
 )
 
 type Redis struct {

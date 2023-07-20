@@ -1,17 +1,16 @@
-package main
+package integration_test
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net"
+
+	log2 "log"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
+	"time"
 
 	"github.com/go-kit/log"
-	"github.com/oklog/oklog/pkg/group"
 	redis "github.com/redis/go-redis/v9"
 	leaderendpoint "github.com/surajkadam/youtube_assignment/leaderboard/endpoint"
 	leaderservice "github.com/surajkadam/youtube_assignment/leaderboard/service"
@@ -31,13 +30,20 @@ type config struct {
 	Password string `json:"password"`
 }
 
-func main() {
+func getHandler() (http.Handler, func()) {
 	data, err := os.ReadFile("config.json")
 	if err != nil {
 		panic("not able load the configurations")
 	}
 	c := config{}
 	json.Unmarshal(data, &c)
+
+	c.Key = "youtube_assignment_test"
+	c.Port = "8080"
+	c.Address = "localhost:6379"
+	c.PoolSize = 50
+
+	log2.Printf("\nconfigurations : %+v\n\n", c)
 
 	var client *redis.Client
 	{
@@ -87,47 +93,14 @@ func main() {
 	mux.Handle("/video/", viewHttpServer)
 	mux.Handle("/top/", leaderHttpServer)
 
-	// using Server struct so that I can handle the shutdown grasefully
-	l, err := net.Listen("tcp", c.Port)
-	if err != nil {
-		panic(err)
+	clearRedis := func() {
+		client.Del(context.Background(), c.Key, getKey(c.Key))
 	}
 
-	h := http.Server{
-		Handler: mux,
-	}
+	return mux, clearRedis
+}
 
-	var g group.Group
-	{
-		g.Add(
-			func() error {
-				logger.Log("info", "startig the server", "port :", c.Port)
-
-				return h.Serve(l)
-			},
-			func(error) {
-				logger.Log("info", "server shutdown initialize")
-
-				h.Shutdown(context.Background())
-
-				logger.Log("info", "server shutdown completed...")
-			},
-		)
-	}
-
-	cancelInterrupt := make(chan struct{})
-
-	g.Add(func() error {
-		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
-		select {
-		case sig := <-c:
-			return fmt.Errorf("received signal %s", sig)
-		case <-cancelInterrupt:
-			return nil
-		}
-	}, func(error) {
-		close(cancelInterrupt)
-	})
-	g.Run()
+func getKey(key string) string {
+	y, m, d := time.Now().Date()
+	return fmt.Sprintf("%s:%d-%d-%d", key, y, m, d)
 }

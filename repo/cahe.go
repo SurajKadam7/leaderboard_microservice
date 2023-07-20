@@ -1,4 +1,4 @@
-package cache
+package repo
 
 import (
 	"context"
@@ -15,4 +15,4 @@ type Repository interface {
 	LifetimeViewCount(ctx context.Context, video string) (viewes float64, err error)
 	AddVideos(ctx context.Context, videos []model.Video) (err error)
 }
-// mockgen . Repository
+// mockgen . Repositoyr

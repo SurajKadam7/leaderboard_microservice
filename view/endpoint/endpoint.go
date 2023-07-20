@@ -31,8 +31,7 @@ func New(srv viewservice.Service) Set {
 
 type videoViews struct {
 	model.ViedeoDetails
-	Err  error `json:"error,omitempty"`
-	Stat int32 `json:"status,omitempty"`
+	Err error `json:"error,omitempty"`
 }
 
 type ViewingRequest struct {
@@ -50,7 +49,7 @@ func (vw *ViewingResponse) Error() error {
 func makeViewingEndpoint(s viewservice.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (response interface{}, err error) {
 		video := request.(ViewingRequest)
-		res, err := s.Viewing(ctx, video.Video)
+		res, err := s.View(ctx, video.Video)
 
 		return &ViewingResponse{
 

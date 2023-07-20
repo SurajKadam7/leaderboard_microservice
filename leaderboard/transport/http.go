@@ -3,15 +3,18 @@ package leadertransport
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"net/http"
-	"strconv"
+	"path"
+	"reflect"
+	"strings"
 
 	kithttp "github.com/go-kit/kit/transport/http"
 	kitlog "github.com/go-kit/log"
 	"github.com/gorilla/mux"
 	youtubeerror "github.com/surajkadam/youtube_assignment/errors"
 	leaderendpoint "github.com/surajkadam/youtube_assignment/leaderboard/endpoint"
+	"github.com/surajkadam/youtube_assignment/model"
 
 	"github.com/go-kit/kit/transport"
 )
@@ -48,12 +51,8 @@ func NewHTTPHandler(endpoint leaderendpoint.Set, logger kitlog.Logger) http.Hand
 }
 
 func decodeDayTopViewsRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	l := r.URL.Query().Get("limit")
-	limit, err := strconv.ParseInt(l, 10, 64)
+	limit := r.URL.Query().Get("limit")
 
-	if err != nil {
-		return nil, fmt.Errorf("invalid value in limit can not parse it: %v", limit)
-	}
 	return &leaderendpoint.DayTopRequest{
 		Limit: limit,
 	}, nil
@@ -61,12 +60,8 @@ func decodeDayTopViewsRequest(_ context.Context, r *http.Request) (interface{}, 
 }
 
 func decodeLifetimeTopViewsRequest(_ context.Context, r *http.Request) (interface{}, error) {
-	l := r.URL.Query().Get("limit")
-	limit, err := strconv.ParseInt(l, 10, 64)
+	limit := r.URL.Query().Get("limit")
 
-	if err != nil {
-		return nil, fmt.Errorf("invalid value in limit can not parse it: %v", limit)
-	}
 	return &leaderendpoint.LifeTimeTopRequest{
 		Limit: limit,
 	}, nil
@@ -96,7 +91,78 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	json.NewEncoder(w).Encode(map[string]interface{}{
+	json.NewEncoder(w).Encode(map[string]string{
 		"error": err.Error(),
 	})
+}
+
+// this will set the body in case of the post request
+// we can add the path in the url as well here
+func ClientDayTopViewedEncoder() kithttp.EncodeRequestFunc {
+	return func(ctx context.Context, r *http.Request, i interface{}) error {
+		r.URL.Path = path.Join(r.URL.Path, "/top/viewes")
+		return createQueryFromStruct(r, i)
+
+	}
+}
+
+type Response struct {
+	Videos []model.ViedeoDetails `json:"videos,omitempty"`
+	Err    string                `json:"error,omitempty"`
+}
+
+// this will decode the request
+func ClientDayTopViewdDecoder() kithttp.DecodeResponseFunc {
+	return func(ctx context.Context, r *http.Response) (response interface{}, err error) {
+		var resStruct Response
+		err = json.NewDecoder(r.Body).Decode(&resStruct)
+
+		if err != nil {
+			return
+		}
+		if resStruct.Err != "" {
+			err = errors.New(resStruct.Err)
+		}
+
+		return resStruct.Videos, err
+	}
+}
+
+func ClientLifetimeTopViewedEncoder() kithttp.EncodeRequestFunc {
+	return func(ctx context.Context, r *http.Request, i interface{}) error {
+		r.URL.Path = path.Join(r.URL.Path, "/top/day/viewes")
+		return createQueryFromStruct(r, i)
+	}
+}
+
+// this will decode the request
+func ClientLifetimeTopViewdDecoder() kithttp.DecodeResponseFunc {
+	return func(ctx context.Context, r *http.Response) (response interface{}, err error) {
+		var resStruct Response
+		err = json.NewDecoder(r.Body).Decode(&resStruct)
+		if err != nil {
+			return
+		}
+		if resStruct.Err != "" {
+			err = errors.New(resStruct.Err)
+		}
+		return resStruct.Videos, err
+	}
+}
+
+func createQueryFromStruct(r *http.Request, i interface{}) error {
+	req := i
+
+	value := reflect.ValueOf(req)
+	for i := 0; i < value.NumField(); i++ {
+		fieldName := value.Type().Field(i).Name
+		fieldName = strings.ToLower(fieldName)
+
+		filedValue := value.Field(i).Interface().(string)
+
+		queryMap := r.URL.Query()
+		queryMap.Add(fieldName, filedValue)
+		r.URL.RawQuery = queryMap.Encode()
+	}
+	return nil
 }
