@@ -12,13 +12,14 @@ import (
 
 	"github.com/go-kit/log"
 	redis "github.com/redis/go-redis/v9"
-	leaderendpoint "github.com/surajkadam/youtube_assignment/leaderboard/endpoint"
-	leaderservice "github.com/surajkadam/youtube_assignment/leaderboard/service"
-	leadertransport "github.com/surajkadam/youtube_assignment/leaderboard/transport"
-	rediscache "github.com/surajkadam/youtube_assignment/repo/redis"
-	viewendpoint "github.com/surajkadam/youtube_assignment/view/endpoint"
-	viewservice "github.com/surajkadam/youtube_assignment/view/service"
-	viewtransport "github.com/surajkadam/youtube_assignment/view/transport"
+	leaderendpoint "github.com/SurajKadam7/leaderboard_microservice/leaderboard/endpoint"
+	leaderservice "github.com/SurajKadam7/leaderboard_microservice/leaderboard/service"
+	leadertransport "github.com/SurajKadam7/leaderboard_microservice/leaderboard/transport"
+	"github.com/SurajKadam7/leaderboard_microservice/repo"
+	rediscache "github.com/SurajKadam7/leaderboard_microservice/repo/redis"
+	viewendpoint "github.com/SurajKadam7/leaderboard_microservice/view/endpoint"
+	viewservice "github.com/SurajKadam7/leaderboard_microservice/view/service"
+	viewtransport "github.com/SurajKadam7/leaderboard_microservice/view/transport"
 )
 
 type config struct {
@@ -30,7 +31,9 @@ type config struct {
 	Password string `json:"password"`
 }
 
-func getHandler() (http.Handler, func()) {
+
+
+func getHandler() (http.Handler, repo.Repository, func()) {
 	data, err := os.ReadFile("config.json")
 	if err != nil {
 		panic("not able load the configurations")
@@ -97,7 +100,7 @@ func getHandler() (http.Handler, func()) {
 		client.Del(context.Background(), c.Key, getKey(c.Key))
 	}
 
-	return mux, clearRedis
+	return mux, rds, clearRedis
 }
 
 func getKey(key string) string {

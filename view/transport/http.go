@@ -8,8 +8,8 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	kitlog "github.com/go-kit/log"
 	"github.com/gorilla/mux"
-	youtubeerror "github.com/surajkadam/youtube_assignment/errors"
-	viewendpoint "github.com/surajkadam/youtube_assignment/view/endpoint"
+	youtubeerror "github.com/SurajKadam7/leaderboard_microservice/errors"
+	viewendpoint "github.com/SurajKadam7/leaderboard_microservice/view/endpoint"
 
 	"github.com/go-kit/kit/transport"
 )
@@ -128,6 +128,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	switch err {
 	case youtubeerror.ErrEmptyVideoValuePassed, youtubeerror.ErrInvalidLimitValue, youtubeerror.ErrVideoNotFound:
 		w.WriteHeader(http.StatusBadRequest)
+
+	case youtubeerror.ErrDBDown:
+		w.WriteHeader(http.StatusInternalServerError)
+		err = youtubeerror.ErrSorry
 
 	default:
 		w.WriteHeader(http.StatusInternalServerError)

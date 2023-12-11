@@ -3,8 +3,8 @@ package viewservice
 import (
 	"context"
 
-	"github.com/surajkadam/youtube_assignment/model"
-	"github.com/surajkadam/youtube_assignment/repo"
+	"github.com/SurajKadam7/leaderboard_microservice/model"
+	"github.com/SurajKadam7/leaderboard_microservice/repo"
 )
 
 // my bussiness logic will stay here ...

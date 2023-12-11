@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/go-kit/kit/endpoint"
-	"github.com/surajkadam/youtube_assignment/model"
-	viewservice "github.com/surajkadam/youtube_assignment/view/service"
+	"github.com/SurajKadam7/leaderboard_microservice/model"
+	viewservice "github.com/SurajKadam7/leaderboard_microservice/view/service"
 )
 
 type Set struct {

@@ -2,13 +2,15 @@ package rediscache
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	redis "github.com/redis/go-redis/v9"
-	youtubeerror "github.com/surajkadam/youtube_assignment/errors"
-	"github.com/surajkadam/youtube_assignment/model"
-	cache "github.com/surajkadam/youtube_assignment/repo"
+	youtubeerror "github.com/SurajKadam7/leaderboard_microservice/errors"
+	"github.com/SurajKadam7/leaderboard_microservice/model"
+	cache "github.com/SurajKadam7/leaderboard_microservice/repo"
 )
 
 type Redis struct {
@@ -36,7 +38,8 @@ func (r *Redis) Viewed(ctx context.Context, video string, incr int64) (res float
 	_, err = r.client.ZIncrBy(ctx, key, float64(incr), video).Result()
 
 	if err != nil {
-		return res, youtubeerror.ErrNotAbleToIncrement
+		err = checkError(err)
+		return
 	}
 
 	return res, err
@@ -109,7 +112,8 @@ func topViewed(ctx context.Context, r *redis.Client, key string, limit int64) (r
 	}).Result()
 
 	if err != nil {
-		return nil, youtubeerror.ErrNotAbleToDisplayTopViewed
+		err = checkError(err)
+		return
 	}
 
 	result = []model.ViedeoDetails{}
@@ -132,16 +136,20 @@ func viewCount(ctx context.Context, r *redis.Client, video string, key string) (
 
 	viewes, err = r.ZScore(ctx, key, video).Result()
 
-	switch err {
-	case redis.Nil:
-		err = youtubeerror.ErrVideoNotFound
-		return
-	case nil:
-		// continue below
-	default:
-		return 0, err
+	if err != nil {
+		err = checkError(err)
 	}
 
 	return viewes, err
 
+}
+
+func checkError(err error) error {
+	if err == redis.Nil {
+		return youtubeerror.ErrVideoNotFound
+	}
+	if strings.Contains(errors.Unwrap(err).Error(), "connection refused") {
+		return youtubeerror.ErrDBDown
+	}
+	return err
 }

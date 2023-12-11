@@ -1,51 +1,71 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+
 	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
-	"github.com/go-kit/log"
+	kitLog "github.com/go-kit/log"
 	"github.com/oklog/oklog/pkg/group"
 	redis "github.com/redis/go-redis/v9"
-	leaderendpoint "github.com/surajkadam/youtube_assignment/leaderboard/endpoint"
-	leaderservice "github.com/surajkadam/youtube_assignment/leaderboard/service"
-	leadertransport "github.com/surajkadam/youtube_assignment/leaderboard/transport"
-	rediscache "github.com/surajkadam/youtube_assignment/repo/redis"
-	viewendpoint "github.com/surajkadam/youtube_assignment/view/endpoint"
-	viewservice "github.com/surajkadam/youtube_assignment/view/service"
-	viewtransport "github.com/surajkadam/youtube_assignment/view/transport"
+	conf "github.com/SurajKadam7/leaderboard_microservice/config"
+	leaderendpoint "github.com/SurajKadam7/leaderboard_microservice/leaderboard/endpoint"
+	leaderservice "github.com/SurajKadam7/leaderboard_microservice/leaderboard/service"
+	leadertransport "github.com/SurajKadam7/leaderboard_microservice/leaderboard/transport"
+	rediscache "github.com/SurajKadam7/leaderboard_microservice/repo/redis"
+	viewendpoint "github.com/SurajKadam7/leaderboard_microservice/view/endpoint"
+	viewservice "github.com/SurajKadam7/leaderboard_microservice/view/service"
+	viewtransport "github.com/SurajKadam7/leaderboard_microservice/view/transport"
+
+	capi "github.com/hashicorp/consul/api"
 )
 
-type config struct {
-	Key      string `json:"key"`
-	Port     string `json:"port"`
-	Address  string `json:"address"`
-	PoolSize int    `json:"poolSize"`
-	UserName string `json:"username"`
-	Password string `json:"password"`
-}
-
 func main() {
-	data, err := os.ReadFile("config.json")
+	// loding the configurations
+	consulUrl, err := loadConfig()
 	if err != nil {
-		panic("not able load the configurations")
+		log.Fatal(err)
 	}
-	c := config{}
-	json.Unmarshal(data, &c)
+
+	// using consul for getting the configurations
+	var consulClient *capi.Client
+	{
+		defaultConfig := capi.DefaultConfig()
+		defaultConfig.Address = consulUrl
+		client, err := capi.NewClient(defaultConfig)
+
+		if err != nil {
+			panic(err)
+		}
+
+		consulClient = client
+	}
+
+	kv, _, err := consulClient.KV().Get("youtube_assignment", nil)
+
+	if err != nil {
+		panic(fmt.Errorf("error while featching kv from consul err : %w", err))
+	}
+
+	c, err := conf.New(bytes.NewBuffer(kv.Value))
+
+	if err != nil {
+		panic(err)
+	}
 
 	var client *redis.Client
 	{
 		client = redis.NewClient(&redis.Options{
-			Addr:     c.Address,
+			Addr:     c.RedisAddress,
 			PoolSize: c.PoolSize,
-			Username: c.UserName,
-			Password: c.Password,
 		})
 
 		_, err := client.Ping(context.Background()).Result()
@@ -57,11 +77,11 @@ func main() {
 
 	rds := rediscache.New(client, c.Key)
 
-	var logger log.Logger
+	var logger kitLog.Logger
 	{
-		logger = log.NewLogfmtLogger(os.Stderr)
-		logger = log.With(logger, "ts", log.DefaultTimestampUTC)
-		logger = log.With(logger, "caller", log.DefaultCaller)
+		logger = kitLog.NewLogfmtLogger(os.Stderr)
+		logger = kitLog.With(logger, "ts", kitLog.DefaultTimestampUTC)
+		logger = kitLog.With(logger, "caller", kitLog.DefaultCaller)
 	}
 
 	var viewService viewservice.Service
@@ -130,4 +150,16 @@ func main() {
 		close(cancelInterrupt)
 	})
 	g.Run()
+}
+
+func loadConfig() (consulUrl string, err error) {
+	var config struct {
+		Consul string `json:"consul"`
+	}
+	file, err := os.Open("config.json")
+	if err != nil {
+		return "", fmt.Errorf("error while opening config : %w", err)
+	}
+	json.NewDecoder(file).Decode(&config)
+	return config.Consul, nil
 }

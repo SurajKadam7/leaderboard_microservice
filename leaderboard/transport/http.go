@@ -12,9 +12,9 @@ import (
 	kithttp "github.com/go-kit/kit/transport/http"
 	kitlog "github.com/go-kit/log"
 	"github.com/gorilla/mux"
-	youtubeerror "github.com/surajkadam/youtube_assignment/errors"
-	leaderendpoint "github.com/surajkadam/youtube_assignment/leaderboard/endpoint"
-	"github.com/surajkadam/youtube_assignment/model"
+	youtubeerror "github.com/SurajKadam7/leaderboard_microservice/errors"
+	leaderendpoint "github.com/SurajKadam7/leaderboard_microservice/leaderboard/endpoint"
+	"github.com/SurajKadam7/leaderboard_microservice/model"
 
 	"github.com/go-kit/kit/transport"
 )
@@ -88,6 +88,10 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 	case youtubeerror.ErrEmptyVideoValuePassed, youtubeerror.ErrInvalidLimitValue, youtubeerror.ErrVideoNotFound:
 		w.WriteHeader(http.StatusBadRequest)
 
+	case youtubeerror.ErrDBDown:
+		w.WriteHeader(http.StatusInternalServerError)
+		err = youtubeerror.ErrSorry
+
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
@@ -154,13 +158,13 @@ func createQueryFromStruct(r *http.Request, i interface{}) error {
 	req := i
 
 	value := reflect.ValueOf(req)
+	queryMap := r.URL.Query()
 	for i := 0; i < value.NumField(); i++ {
 		fieldName := value.Type().Field(i).Name
 		fieldName = strings.ToLower(fieldName)
 
 		filedValue := value.Field(i).Interface().(string)
 
-		queryMap := r.URL.Query()
 		queryMap.Add(fieldName, filedValue)
 		r.URL.RawQuery = queryMap.Encode()
 	}

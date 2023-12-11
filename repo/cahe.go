@@ -3,7 +3,7 @@ package repo
 import (
 	"context"
 
-	"github.com/surajkadam/youtube_assignment/model"
+	"github.com/SurajKadam7/leaderboard_microservice/model"
 )
 
 //go:generate mockgen -source=cahe.go -destination mock/mock.go

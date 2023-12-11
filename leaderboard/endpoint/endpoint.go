@@ -6,8 +6,8 @@ import (
 	"strconv"
 
 	"github.com/go-kit/kit/endpoint"
-	leaderservice "github.com/surajkadam/youtube_assignment/leaderboard/service"
-	"github.com/surajkadam/youtube_assignment/model"
+	leaderservice "github.com/SurajKadam7/leaderboard_microservice/leaderboard/service"
+	"github.com/SurajKadam7/leaderboard_microservice/model"
 )
 
 type videoViews struct {

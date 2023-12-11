@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/go-kit/log"
-	"github.com/surajkadam/youtube_assignment/model"
+	"github.com/SurajKadam7/leaderboard_microservice/model"
 )
 
 // Middleware describes a service (as opposed to endpoint) middleware.

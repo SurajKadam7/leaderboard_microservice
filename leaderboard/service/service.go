@@ -3,9 +3,9 @@ package leaderservice
 import (
 	"context"
 
-	youtubeerror "github.com/surajkadam/youtube_assignment/errors"
-	"github.com/surajkadam/youtube_assignment/model"
-	"github.com/surajkadam/youtube_assignment/repo"
+	youtubeerror "github.com/SurajKadam7/leaderboard_microservice/errors"
+	"github.com/SurajKadam7/leaderboard_microservice/model"
+	"github.com/SurajKadam7/leaderboard_microservice/repo"
 )
 
 type Service interface {

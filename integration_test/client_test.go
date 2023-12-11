@@ -11,8 +11,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/surajkadam/youtube_assignment/leaderboard/client"
-	"github.com/surajkadam/youtube_assignment/model"
+	"github.com/SurajKadam7/leaderboard_microservice/leaderboard/client"
+	"github.com/SurajKadam7/leaderboard_microservice/model"
 )
 
 type args struct {
@@ -88,7 +88,19 @@ var tests5 = []struct {
 }
 
 func Test_LeaderBoard_Day_handlers(t *testing.T) {
-	handler, _ := getHandler()
+	// seed data
+	data := map[string]int{
+		"race1": 2,
+		"race2": 2,
+		"race3": 1,
+	}
+
+	handler, repo, clearRedis := getHandler()
+	defer clearRedis()
+
+	for key, value := range data {
+		repo.Viewed(context.Background(), key, int64(value))
+	}
 
 	srv := httptest.NewServer(handler)
 	defer srv.Close()
@@ -125,7 +137,19 @@ func Test_LeaderBoard_Day_handlers(t *testing.T) {
 }
 
 func Test_LeaderBoard_Liftime_handlers(t *testing.T) {
-	handler, _ := getHandler()
+	// seed data
+	data := map[string]int{
+		"race1": 2,
+		"race2": 2,
+		"race3": 1,
+	}
+
+	handler, repo, clearRedis := getHandler()
+	defer clearRedis()
+
+	for key, value := range data {
+		repo.Viewed(context.Background(), key, int64(value))
+	}
 	// defer clearRedis()
 
 	srv := httptest.NewServer(handler)
@@ -156,3 +180,5 @@ func Test_LeaderBoard_Liftime_handlers(t *testing.T) {
 	wg.Wait()
 
 }
+
+// youtube_assignment

@@ -1,0 +1,33 @@
+version: "3.8"
+
+services:
+
+  backend:
+    build: .
+    ports:
+      - 8080:8080
+    depends_on:
+      - redis-db
+      - consul
+
+  redis-db:
+    image: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - redis:/data
+
+
+  consul:
+    image: hashicorp/consul
+    ports:
+      - 8300:8300
+      - 8500:8500
+    volumes:
+      - consul:/consul/data
+  
+
+volumes:
+  redis:
+  consul:
+  

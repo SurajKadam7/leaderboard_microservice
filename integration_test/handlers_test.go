@@ -1,6 +1,7 @@
 package integration_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http/httptest"
 	"reflect"
@@ -130,8 +131,8 @@ var tests = []struct {
 // sequncy of running these testCases is always 1, 2, 3
 
 func Test_Views_handlers(t *testing.T) {
-	handler, _ := getHandler()
-	// defer clearRedis()
+	handler, _, clearRedis := getHandler()
+	defer clearRedis()
 
 	srv := httptest.NewTLSServer(handler)
 	defer srv.Close()
@@ -213,8 +214,19 @@ var tests2 = []struct {
 }
 
 func Test_LeaderBoard_handlers(t *testing.T) {
-	handler, clearRedis := getHandler()
+	// seed data
+	data := map[string]int{
+		"race1": 2,
+		"race2": 2,
+		"race3": 1,
+	}
+
+	handler, repo, clearRedis := getHandler()
 	defer clearRedis()
+
+	for key, value := range data {
+		repo.Viewed(context.Background(), key, int64(value))
+	}
 
 	srv := httptest.NewTLSServer(handler)
 	defer srv.Close()
@@ -288,8 +300,19 @@ var tests3 = []struct {
 }
 
 func Test_Add_handlers(t *testing.T) {
-	handler, clearRedis := getHandler()
+	// seed data
+	data := map[string]int{
+		"race1": 2,
+		"race2": 2,
+		"race3": 1,
+	}
+
+	handler, repo, clearRedis := getHandler()
 	defer clearRedis()
+
+	for key, value := range data {
+		repo.Viewed(context.Background(), key, int64(value))
+	}
 
 	srv := httptest.NewTLSServer(handler)
 	defer srv.Close()

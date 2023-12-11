@@ -7,9 +7,9 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/surajkadam/youtube_assignment/model"
-	cache "github.com/surajkadam/youtube_assignment/repo"
-	mock_cache "github.com/surajkadam/youtube_assignment/repo/mock"
+	"github.com/SurajKadam7/leaderboard_microservice/model"
+	cache "github.com/SurajKadam7/leaderboard_microservice/repo"
+	mock_cache "github.com/SurajKadam7/leaderboard_microservice/repo/mock"
 )
 
 var videos = []model.ViedeoDetails{

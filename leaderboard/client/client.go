@@ -6,9 +6,9 @@ import (
 
 	"github.com/go-kit/kit/endpoint"
 	httpkit "github.com/go-kit/kit/transport/http"
-	leaderendpoint "github.com/surajkadam/youtube_assignment/leaderboard/endpoint"
-	leadertransport "github.com/surajkadam/youtube_assignment/leaderboard/transport"
-	"github.com/surajkadam/youtube_assignment/model"
+	leaderendpoint "github.com/SurajKadam7/leaderboard_microservice/leaderboard/endpoint"
+	leadertransport "github.com/SurajKadam7/leaderboard_microservice/leaderboard/transport"
+	"github.com/SurajKadam7/leaderboard_microservice/model"
 )
 
 type ClientHttp struct {
