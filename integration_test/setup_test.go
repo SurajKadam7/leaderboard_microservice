@@ -10,8 +10,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-kit/log"
-	redis "github.com/redis/go-redis/v9"
 	leaderendpoint "github.com/SurajKadam7/leaderboard_microservice/leaderboard/endpoint"
 	leaderservice "github.com/SurajKadam7/leaderboard_microservice/leaderboard/service"
 	leadertransport "github.com/SurajKadam7/leaderboard_microservice/leaderboard/transport"
@@ -20,6 +18,8 @@ import (
 	viewendpoint "github.com/SurajKadam7/leaderboard_microservice/view/endpoint"
 	viewservice "github.com/SurajKadam7/leaderboard_microservice/view/service"
 	viewtransport "github.com/SurajKadam7/leaderboard_microservice/view/transport"
+	"github.com/go-kit/log"
+	redis "github.com/redis/go-redis/v9"
 )
 
 type config struct {
@@ -31,17 +31,15 @@ type config struct {
 	Password string `json:"password"`
 }
 
-
-
 func getHandler() (http.Handler, repo.Repository, func()) {
 	data, err := os.ReadFile("config.json")
 	if err != nil {
-		panic("not able load the configurations")
+		log2.Fatal("not able load the configurations")
 	}
 	c := config{}
 	json.Unmarshal(data, &c)
 
-	c.Key = "youtube_assignment_test"
+	c.Key = "leaderboard_test"
 	c.Port = "8080"
 	c.Address = "localhost:6379"
 	c.PoolSize = 50
@@ -60,7 +58,7 @@ func getHandler() (http.Handler, repo.Repository, func()) {
 		_, err := client.Ping(context.Background()).Result()
 
 		if err != nil {
-			panic("Not able to ping to redis")
+			log2.Fatal("Not able to ping to redis")
 		}
 	}
 

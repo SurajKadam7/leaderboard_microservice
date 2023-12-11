@@ -4,6 +4,7 @@ package integration_test
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http/httptest"
 	"net/url"
 	"reflect"
@@ -108,7 +109,7 @@ func Test_LeaderBoard_Day_handlers(t *testing.T) {
 	url, err := url.Parse(srv.URL)
 
 	if err != nil {
-		panic("error")
+		log.Fatal("error")
 	}
 
 	for _, tt := range tests5 {
@@ -158,7 +159,7 @@ func Test_LeaderBoard_Liftime_handlers(t *testing.T) {
 	url, err := url.Parse(srv.URL)
 
 	if err != nil {
-		panic("error")
+		log.Fatal("error")
 	}
 	wg := sync.WaitGroup{}
 	for _, tt := range tests5 {
@@ -181,4 +182,4 @@ func Test_LeaderBoard_Liftime_handlers(t *testing.T) {
 
 }
 
-// youtube_assignment
+// leaderboard

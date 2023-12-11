@@ -1,6 +1,6 @@
-// for intigration test use key youtube_assignment_test
+// for intigration test use key leaderboard_test
 {
-  "key":"youtube_assignment_test",
+  "key":"leaderboard_test",
   "port":":8080",
   "address" : "localhost:6379",
   "poolSize":50,

@@ -13,9 +13,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	kitLog "github.com/go-kit/log"
-	"github.com/oklog/oklog/pkg/group"
-	redis "github.com/redis/go-redis/v9"
 	conf "github.com/SurajKadam7/leaderboard_microservice/config"
 	leaderendpoint "github.com/SurajKadam7/leaderboard_microservice/leaderboard/endpoint"
 	leaderservice "github.com/SurajKadam7/leaderboard_microservice/leaderboard/service"
@@ -24,6 +21,9 @@ import (
 	viewendpoint "github.com/SurajKadam7/leaderboard_microservice/view/endpoint"
 	viewservice "github.com/SurajKadam7/leaderboard_microservice/view/service"
 	viewtransport "github.com/SurajKadam7/leaderboard_microservice/view/transport"
+	kitLog "github.com/go-kit/log"
+	"github.com/oklog/oklog/pkg/group"
+	redis "github.com/redis/go-redis/v9"
 
 	capi "github.com/hashicorp/consul/api"
 )
@@ -43,22 +43,24 @@ func main() {
 		client, err := capi.NewClient(defaultConfig)
 
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 
 		consulClient = client
 	}
-
-	kv, _, err := consulClient.KV().Get("youtube_assignment", nil)
-
+	
+	key := "leaderboard"
+	kv, _, err := consulClient.KV().Get(key, nil)
 	if err != nil {
-		panic(fmt.Errorf("error while featching kv from consul err : %w", err))
+		log.Fatal(fmt.Errorf("error while featching kv from consul err : %w", err))
+	}
+	if kv == nil{
+		log.Fatalf("key not present on consol key : %v", key)
 	}
 
 	c, err := conf.New(bytes.NewBuffer(kv.Value))
-
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	var client *redis.Client
@@ -71,7 +73,7 @@ func main() {
 		_, err := client.Ping(context.Background()).Result()
 
 		if err != nil {
-			panic("Not able to ping to redis")
+			log.Fatal("Not able to ping to redis")
 		}
 	}
 
@@ -110,7 +112,7 @@ func main() {
 	// using Server struct so that I can handle the shutdown grasefully
 	l, err := net.Listen("tcp", c.Port)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	h := http.Server{

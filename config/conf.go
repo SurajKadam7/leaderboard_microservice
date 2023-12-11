@@ -3,9 +3,7 @@ package conf
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
-	stdLog "log"
 )
 
 type config struct {
@@ -16,19 +14,17 @@ type config struct {
 	PoolSize     int    `json:"poolSize"`
 }
 
-func New(r io.Reader) (config, error) {
-	c := config{}
-	err := json.NewDecoder(r).Decode(&c)
+func New(r io.Reader) (c config, err error) {
+	c = config{}
 
+	err = json.NewDecoder(r).Decode(&c)
 	if err != nil {
-		panic(fmt.Errorf("not able unmarshal the kv err : %w", err))
+		return c, err
 	}
 
 	if ok, err := c.IsValid(); !ok {
-		panic(fmt.Sprint("Config Validation Faild : ", err))
+		return c, err
 	}
-
-	stdLog.Printf("\nConfigurations : \n%+v", c)
 
 	return c, err
 }
